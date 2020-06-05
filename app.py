@@ -17,8 +17,6 @@ data = pd.read_csv('June_MM_Data.csv')
 
 #Populating the drop down menu with the unique column names
 dropdown = data.columns[2:].to_list()
-#dropdown.append(data.columns[4])
-#dropdown.insert(0, dropdown.pop(-1))
 
 #Populating the radio buttons with the unique continent names
     #User can pick all or just one at a time.
@@ -30,15 +28,20 @@ radio.insert(0, radio.pop(-1))
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-
+server = app.server
 colors = {
     'background': '#111111',
     'text': '#7FDBFF'
 }
 
+#chart_colors = ['#7FDBFF','#FFA37F', '#9BFF7F', '#E37FFF', '#ffea7f', '#d47fff']
 
-chart_colors = ['#7FDBFF','#FFA37F', '#9BFF7F', '#E37FFF', '#ffea7f', '#d47fff']
-
+color_dict = {'#7FDBFF': ['YES', 'MALE ONLY', 'UNKNOWN'],
+              '#FF624C': ['NO', 'ANY GENDER', 'DEATH'], 
+              '#9BFF7F': ['DE FACTO'], 
+              '#FF8F4C': ['FOR LIFE'], 
+              '#FFE84C': ['11-20 years'], 
+              '#BCFF4C': ['1-10 years']}
 
 styles = {'width': '30%',
                'padding-left': '5%',
@@ -102,6 +105,7 @@ def clean_df(df_plot, Field):
 
     elif Field == 'CRIMINALISATION_GENDER':
         df_plot = df_plot.replace({Field: 'M ONLY'}, {Field: 'MALE ONLY'})
+        df_plot = df_plot[df_plot['CRIMINALISATION_GENDER']!= 'DOES NOT APPLY']
 
     else:
         df_plot = df_plot.replace({Field: 'Y'}, {Field: 'YES'})
@@ -130,9 +134,15 @@ def update_graph(Field):
       fill_value=0)
 
     return_data = []
-    for i,column in enumerate(pv.columns):
-      trace = go.Bar(x=pv.index, y=pv[column], name = column[1], marker = dict(color=chart_colors[i]))
-      return_data.append(trace)
+    for i,column in enumerate(pv.columns.sortlevel(level=1, ascending=False)[0]):
+        color_bar = ''
+        for color_list in color_dict:
+            options = color_dict.get(color_list)
+            if column[1] in options:
+                color_bar = color_list
+        trace = go.Bar(x=pv.index, y=pv[column], name = column[1], marker = dict(color=color_bar))
+        return_data.append(trace)
+
     #Actual figure being created is returned
     return {
         'data': return_data,
@@ -183,13 +193,10 @@ def update_waffle(Field, Continent):
         y = []
         countries = []
         waffle_colors = []
-        color = ''
-        if name == 'NO':
-          color = chart_colors[1]
-        elif name == 'YES':
-          color = chart_colors[0]
-        else:
-          color = chart_colors[2]
+        for color_list in color_dict:
+          options = color_dict.get(color_list)
+          if name in options:
+            color = color_list
         response = waffle_df[waffle_df[Field]== name].reset_index()
         for j in range(0, count):
             if Xpos == Xlim:
