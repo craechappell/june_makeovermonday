@@ -25,9 +25,14 @@ radio.append('ALL')
 radio.insert(0, radio.pop(-1))
 
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', '/assets/typography.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app.server.static_folder = 'assets'
+app.config.suppress_callback_exceptions = True
+app.css.config.serve_locally = True
+app.scripts.config.serve_locally = True
+
 server = app.server
 colors = {
     'background': '#111111',
@@ -48,11 +53,12 @@ styles = {'width': '30%',
                'display': 'inline-block',
                'color': colors['text'],
                'background':colors['background'],
-               'line-height': '1'}
+               'line-height': '1',
+               'height': '3vh'}
 
 #Where the page is designed
 #header, filters, and the graphs
-app.layout = html.Div(style={'backgroundColor': colors['background']}, children =[
+app.layout = html.Div(style={'background': colors['background']}, children =[
     html.H2("Worldwide LGBT+ Rights",
             style={
             'textAlign': 'center',
@@ -76,7 +82,7 @@ app.layout = html.Div(style={'backgroundColor': colors['background']}, children 
     ),
 
     #Stacked bar chart
-    dcc.Graph(id='funnel-graph', style={'height':'50vh'}),
+    dcc.Graph(id='funnel-graph', style={'height':'38vh'}),
     html.Div(
         dcc.RadioItems(
                 id='Continent',
@@ -89,8 +95,16 @@ app.layout = html.Div(style={'backgroundColor': colors['background']}, children 
             ),
         style = styles
     ),
-    dcc.Graph(id='waffle-graph', style={'width':'50%', 'height':'40vh'})
-    
+    html.Div(
+        [
+        dcc.Graph(id='waffle-graph', style={'width':'42%', 'height':'42vh', 'float':'left' }),
+        html.P("This map is included to highlight the geospatial aspects of the first, and primary, question of this project: What countries criminalize consensual same-sex sexual acts between adults? We draw attention to those countries that changed their stance on this topic between 2017 and 2019, to highlight the evolving nature of international legislation on this topic.",
+                style={'width':'14%','height':'42vh', 'float':'left', 'color':colors['text'], 'margin-top':'10px','font-size':'14px', 'margin-right':'5px'}),
+        html.Iframe(src="//www.arcgis.com/apps/Embed/index.html?webmap=329d5a3d0cc841c485cf4b2f4a685f3f&extent=-180,-60.1031,180,81.9124&zoom=true&previewImage=false&scale=true&legendlayers=true&disable_scroll=true&theme=dark", 
+            style={'width':'41%', 'height':'42vh', 'float':'left'})
+            
+        ]
+    )
 ])
 
 def clean_df(df_plot, Field):
@@ -150,7 +164,12 @@ def update_graph(Field):
             go.Layout(
                 title={'text' : "Number of Countries with {}".format(Field), "x": 0.5,  "yref": "paper","y" : 1, "yanchor" : "bottom"},
                 barmode='stack',
+                margin=dict(l=40, r=20, t=40, b=40),
                 hovermode = 'closest',
+                hoverlabel=dict(
+                    font_size=24, 
+                    font_family="Rockwell"
+                ),
                 template = 'plotly_dark'    
             )
     }
@@ -217,9 +236,14 @@ def update_waffle(Field, Continent):
                 title={'text': title, 'x': 0.5,  "yref": "paper","y" : 1, "yanchor" : "bottom" },
                 paper_bgcolor=colors['background'],#'rgba(255,255,255,1)',
                 plot_bgcolor=colors['background'],
+                margin=dict(l=40, r=20, t=40, b=30),
                 xaxis=dict(showgrid=False,zeroline= False, showline=False, visible=False, showticklabels=False),
                 yaxis=dict(showgrid=False,zeroline= False, showline=False, visible=False, showticklabels=False),
-                template = 'plotly_dark'
+                template = 'plotly_dark',
+                hoverlabel=dict(
+                    font_size=24, 
+                    font_family="Rockwell"
+                )
                 )
             )
    )
